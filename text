@@ -1,0 +1,185 @@
+Python bilginizi geliştirmek için güzel bir proje fikrim var! Bu projede, kullanıcıların yapılacak görevleri 
+(To-Do List) ekleyebileceği, düzenleyebileceği, silebileceği ve görevlerin durumunu güncelleyebileceği 
+bir uygulama oluşturacağız. Bu uygulama aşağıdaki özellikleri içerecek:
+1.	Class ve Fonksiyon Kullanımı: Projeyi, nesne yönelimli programlama (OOP) ilkelerine göre yapılandırarak
+ class ve fonksiyonları etkin şekilde kullanacağız.
+2.	JSON İşlemleri: Görevleri kalıcı hale getirmek için görevleri JSON dosyasına kaydedecek ve dosyadan okuyacağız.
+3.	Dinamik Kodlama: Görev yönetimini esnek ve dinamik hale getirmek için sınıfları ve fonksiyonları 
+ayrıntılı bir şekilde yapılandıracağız.
+Proje Adımları
+1.	Görev Sınıfı (Task Class): Her bir görev için bir sınıf tanımlayacağız. Bu sınıf, görev adı, 
+açıklaması ve durum bilgisi (tamamlandı veya tamamlanmadı) gibi özelliklere sahip olacak.
+2.	Görev Yönetimi Sınıfı (TaskManager Class): Bu sınıf, görevleri ekleme, silme, güncelleme ve
+ kaydetme gibi işlemleri yönetecek.
+3.	JSON Okuma ve Yazma: Görevlerin JSON dosyasına kaydedilmesi ve dosyadan okunması sağlanacak.
+Aşağıda projenin temel kod yapısını veriyorum:
+python
+Kodu kopyala
+import json
+
+# 1. Görev Sınıfı
+class Task:
+    def __init__(self, title, description, completed=False):
+        self.title = title
+        self.description = description
+        self.completed = completed
+
+    def to_dict(self):
+        """Görev nesnesini sözlüğe dönüştür."""
+        return {
+            'title': self.title,
+            'description': self.description,
+            'completed': self.completed
+        }
+
+    @classmethod
+    def from_dict(cls, data):
+        """Sözlükten bir görev nesnesi oluştur."""
+        return cls(data['title'], data['description'], data.get('completed', False))
+
+
+# 2. Görev Yönetimi Sınıfı
+class TaskManager:
+    def __init__(self, file_path='tasks.json'):
+        self.file_path = file_path
+        self.tasks = self.load_tasks()
+
+    def add_task(self, task):
+        """Yeni bir görev ekle."""
+        self.tasks.append(task)
+        self.save_tasks()
+
+    def remove_task(self, title):
+        """Görev sil."""
+        self.tasks = [task for task in self.tasks if task.title != title]
+        self.save_tasks()
+
+    def update_task(self, title, **updates):
+        """Görevi güncelle."""
+        for task in self.tasks:
+            if task.title == title:
+                task.title = updates.get('title', task.title)
+                task.description = updates.get('description', task.description)
+                task.completed = updates.get('completed', task.completed)
+        self.save_tasks()
+
+    def list_tasks(self):
+        """Görevleri listele."""
+        for task in self.tasks:
+            status = "Tamamlandı" if task.completed else "Tamamlanmadı"
+            print(f"{task.title} - {task.description} [{status}]")
+
+    def save_tasks(self):
+        """Görevleri JSON dosyasına kaydet."""
+        with open(self.file_path, 'w') as file:
+            json.dump([task.to_dict() for task in self.tasks], file, indent=4)
+
+    def load_tasks(self):
+        """JSON dosyasından görevleri yükle."""
+        try:
+            with open(self.file_path, 'r') as file:
+                return [Task.from_dict(task) for task in json.load(file)]
+        except (FileNotFoundError, json.JSONDecodeError):
+            return []
+
+# Kullanıcı arayüzü (Basit Konsol)
+def main():
+    manager = TaskManager()
+
+    while True:
+        print("\n1. Görev Ekle\n2. Görev Sil\n3. Görev Güncelle\n4. Görevleri Listele\n5. Çıkış")
+        choice = input("Bir seçenek girin: ")
+
+        if choice == '1':
+            title = input("Görev başlığı: ")
+            description = input("Görev açıklaması: ")
+            manager.add_task(Task(title, description))
+
+        elif choice == '2':
+            title = input("Silinecek görevin başlığı: ")
+            manager.remove_task(title)
+
+        elif choice == '3':
+            title = input("Güncellenecek görevin başlığı: ")
+            new_title = input("Yeni başlık (boş bırakılırsa değişmez): ")
+            description = input("Yeni açıklama (boş bırakılırsa değişmez): ")
+            completed = input("Tamamlandı mı? (evet/hayır): ").strip().lower() == 'evet'
+            manager.update_task(title, title=new_title or title, description=description, completed=completed)
+
+        elif choice == '4':
+            manager.list_tasks()
+
+        elif choice == '5':
+            break
+
+        else:
+            print("Geçersiz seçim. Lütfen tekrar deneyin.")
+
+if __name__ == "__main__":
+    main()
+Açıklama
+1.	Task Sınıfı: Task sınıfı, her bir görevin başlık, açıklama ve tamamlanma durumu özelliklerine sahiptir. 
+Ayrıca to_dict ve from_dict metodları sayesinde, görev nesnesini JSON formatında kolayca saklayabiliriz.
+2.	TaskManager Sınıfı: TaskManager sınıfı, görevleri ekleme, silme, güncelleme ve listeleme işlemlerini içerir.
+ Ayrıca görevleri tasks.json dosyasına kaydeder ve gerektiğinde bu dosyadan yükler.
+3.	JSON Okuma ve Yazma: save_tasks metodu görevleri JSON formatında kaydederken, load_tasks metodu dosyayı 
+okuyup görevlere dönüştürür.
+4.	Basit Konsol Arayüzü: main fonksiyonunda kullanıcıdan giriş alarak yukarıdaki işlemler yapılır.
+Bu projeyi genişletebilir, daha fazla özellik ekleyebilir veya bir GUI arayüzü oluşturabilirsiniz. Özellikle 
+sınıfları kullanarak görevlerin nasıl yönetildiğini incelemek, dinamik kodlama açısından yararlı olacaktır.
+4o
+Şunu dedin:
+yukarida belirttigin projeyi bana adim adim yapmam gerekenleri gorev olarak yaz. ben de bu gorevleri takip
+ ederek projeyi tamamalamaya calisayim 
+ChatGPT:
+ChatGPT
+Projeyi adım adım takip edebilmeniz için görevleri listeledim. Bu görevleri sırayla yaparak projeyi tamamlayabilirsiniz.
+Görev Listesi
+1. Adım: Proje Klasörünü Oluştur
+•	Görev: Yeni bir klasör oluşturun ve adını todo_list_project olarak belirleyin.
+•	Görev: tasks.json adlı bir dosya oluşturun. (Bu dosya, görevlerinizin JSON formatında kaydedileceği dosya olacak.)
+•	Görev: Proje klasörünüzde todo_app.py adında bir Python dosyası oluşturun. Bu dosya, tüm kodları içerecek.
+2. Adım: Task Sınıfını Tanımla
+•	Görev: todo_app.py dosyasını açın ve Task sınıfını tanımlayın.
+•	Görev: __init__ metodunu yazın ve görev başlığı, açıklama ve tamamlanma durumu (default olarak False) için özellikler ekleyin.
+•	Görev: Görev nesnesini JSON'a dönüştürmek için to_dict adında bir metod ekleyin. Bu metod, görev nesnesini
+ bir sözlük formatına çevirsin.
+•	Görev: JSON'dan göreve dönüştürmek için from_dict adlı bir sınıf metodunu ekleyin. Bu metod, JSON'daki
+ veriyi bir Task nesnesine çevirsin.
+3. Adım: TaskManager Sınıfını Tanımla
+•	Görev: TaskManager adında bir sınıf oluşturun.
+•	Görev: Bu sınıfa __init__ metodunu ekleyin ve file_path adında bir parametre alın (default olarak 'tasks.json'), 
+böylece JSON dosyasının yolunu belirtmiş olun.
+•	Görev: load_tasks metodunu yazın, JSON dosyasındaki görevleri yükleyip self.tasks listesine eklesin. JSON dosyası
+ yoksa veya okunamıyorsa boş bir liste döndürsün.
+•	Görev: save_tasks adında bir metod yazın ve görev listesini JSON formatında tasks.json dosyasına kaydedin.
+4. Adım: Görev Ekleme İşlemi
+•	Görev: add_task adında bir metod oluşturun.
+•	Görev: Bu metod bir Task nesnesi alacak ve bu görevi self.tasks listesine ekleyecek.
+•	Görev: Yeni bir görev eklendiğinde save_tasks metodunu çağırarak dosyaya kaydedin.
+5. Adım: Görev Silme İşlemi
+•	Görev: remove_task adında bir metod ekleyin.
+•	Görev: Bu metod, görev başlığına göre bir görevi self.tasks listesinden silecek.
+•	Görev: Görev silindikten sonra save_tasks metodunu çağırarak dosyayı güncelleyin.
+6. Adım: Görev Güncelleme İşlemi
+•	Görev: update_task adında bir metod oluşturun.
+•	Görev: Bu metod, verilen başlığa göre bir görevi bulacak ve güncelleme işlemlerini gerçekleştirecek.
+•	Görev: Güncellemeler yapılınca save_tasks metodunu çağırarak dosyaya kaydedin.
+7. Adım: Görev Listeleme İşlemi
+•	Görev: list_tasks adında bir metod oluşturun.
+•	Görev: Bu metod self.tasks listesindeki tüm görevleri sırayla yazdıracak.
+•	Görev: Her görev için başlık, açıklama ve tamamlanma durumunu konsola yazdırın.
+8. Adım: Basit Bir Kullanıcı Arayüzü (Console) Oluştur
+•	Görev: main adında bir fonksiyon oluşturun.
+•	Görev: Kullanıcıdan giriş alarak görevleri ekleme, silme, güncelleme ve listeleme işlemlerini yönetmesini sağlayın.
+•	Görev: main fonksiyonunda, kullanıcı seçimlerine göre add_task, remove_task, update_task ve list_tasks metodlarını çağırın.
+•	Görev: Kullanıcı 5 girdiğinde programdan çıkmasını sağlayın.
+9. Adım: Uygulamayı Çalıştır ve Test Et
+•	Görev: Konsolda uygulamayı çalıştırmak için python todo_app.py komutunu kullanın.
+•	Görev: Yeni görevler ekleyin, görevleri listeleyin, güncelleyin ve silin. Tüm işlemlerin düzgün çalıştığını kontrol edin.
+•	Görev: JSON dosyasına kaydedildiğinden emin olun. tasks.json dosyasını açarak görevlerin kaydedilip kaydedilmediğini kontrol edin.
+10. Adım: Hataları Gözden Geçir ve İyileştirme Yap
+•	Görev: Kodda hata varsa düzeltin, gerekirse try-except blokları ekleyerek hata yönetimi yapın.
+•	Görev: Kod yapısını ve dosya düzenini kontrol ederek projeyi tamamlayın.
+Bu adımları takip ederek projeyi adım adım tamamlayabilirsiniz. Her adımı ayrı ayrı tamamladıktan sonra bir sonraki adıma geçebilirsiniz. Takıldığınız noktalarda bana sorabilirsiniz!
+
